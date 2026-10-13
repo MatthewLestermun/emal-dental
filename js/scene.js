@@ -390,6 +390,8 @@
   const targetColor = new THREE.Color();
   let running = true;
   let spin = 0;
+  let scrollSpin = 0;                 // сколько зуб «накрутила» прокрутка
+  let lastScroll = window.scrollY;
 
   // Вкладка не видна — не тратим ресурсы
   document.addEventListener('visibilitychange', function () {
@@ -422,19 +424,41 @@
     canvas.style.opacity = String(1 - out);
     if (out >= 1) return; // зуба не видно — ничего не рисуем
 
-    // --- Разборка: сначала поднимается коронка, потом уезжает вниз имплант ---
-    const crownLift = smoothstep(0, 0.3, p) * (1 - toWhite);
-    const screwDrop = smoothstep(0.3, 0.6, p) * (1 - toWhite);
+    // --- Прокрутка раскручивает зуб: чем быстрее листаешь, тем быстрее он вращается ---
+    const scrollNow = window.scrollY;
+    scrollSpin += clamp(scrollNow - lastScroll, -140, 140) * 0.0045; // ограничение — чтобы прыжок по меню не закрутил зуб волчком
+    lastScroll = scrollNow;
+
+    // --- Разборка начинается ещё на первом экране, как только начинаешь листать ---
+    // approach — блок про имплант подъезжает снизу: 0 → 1
+    const approach = clamp((vh - story.top) / vh, 0, 1);
+    const crownLift = smoothstep(0.12, 0.95, approach) * (1 - toWhite);
+    const screwDrop = smoothstep(0.04, 0.3, p) * (1 - toWhite);
     const exploded = Math.max(crownLift, screwDrop);
 
+    // Какая деталь сейчас «главная» (те же пороги, что у карточек в main.js)
+    const focusCrown = (1 - smoothstep(0.26, 0.34, p)) * crownLift;
+    const focusAbutment = smoothstep(0.26, 0.34, p) * (1 - smoothstep(0.58, 0.66, p)) * screwDrop;
+    const focusScrew = smoothstep(0.58, 0.66, p) * screwDrop;
+
+    // Главная деталь выдвигается к зрителю и немного увеличивается.
+    // На телефоне выдвигаем слабее: места мало, деталь не должна наезжать на текст
+    const push = mobile ? 0.3 : 1;
     crown.position.y = CROWN_Y + 1.5 * crownLift;
+    crown.position.z = 0.6 * push * focusCrown;
+    crown.scale.setScalar(0.94 * (1 + 0.07 * focusCrown));
+
     screw.position.y = -1.2 * screwDrop;
-    screw.rotation.y += dt * 1.6 * screwDrop; // имплант «вкручивается»
+    screw.position.z = 0.5 * push * focusScrew;
+    screw.rotation.y += dt * (0.4 * screwDrop + 2.2 * focusScrew); // имплант «вкручивается»
+
+    abutment.position.z = 0.6 * push * focusAbutment;
+    abutment.rotation.y += dt * 1.6 * focusAbutment;
 
     // В блоке отбеливания остаётся только коронка
     const metalScale = Math.max(0.0001, 1 - toWhite);
-    abutment.scale.setScalar(metalScale);
-    screw.scale.setScalar(metalScale);
+    abutment.scale.setScalar(metalScale * (1 + 0.45 * focusAbutment));
+    screw.scale.setScalar(metalScale * (1 + 0.07 * focusScrew));
 
     // --- Положение на экране ---
     // Компьютер: справа от текста, в блоке отбеливания перелетает налево.
@@ -446,8 +470,8 @@
     let targetScale;
     let targetY;
     if (mobile) {
-      targetScale = lerp(lerp(0.74, 0.54, exploded), 0.9, toWhite);
-      targetY = halfH * lerp(lerp(0.48, 0.31, exploded), 0.5, toWhite);
+      targetScale = lerp(lerp(0.74, 0.47, exploded), 0.9, toWhite);
+      targetY = halfH * lerp(lerp(0.48, 0.42, exploded), 0.5, toWhite);
     } else {
       targetScale = lerp(lerp(1.15, 0.86, exploded), 1.5, toWhite) * fit;
       targetY = lerp(0.15, -0.3, exploded); // в разобранном виде чуть ниже, чтобы коронка не ушла под шапку
@@ -459,19 +483,23 @@
     const grow = 1 - Math.pow(1 - intro, 3);
 
     const ease = reduceMotion ? 1 : 0.09;
-    const bob = Math.sin(t * 1.2) * 0.08;
-    tooth.position.x += (targetX - tooth.position.x) * ease;
-    tooth.position.y += (targetY + bob - tooth.position.y) * ease;
+    const bob = Math.sin(t * 1.2) * 0.11;
+    // Зуб слегка смещается за мышкой — появляется ощущение глубины
+    const parallaxX = mobile ? 0 : mouse.x * 0.3;
+    const parallaxY = mobile ? 0 : -mouse.y * 0.18;
+    tooth.position.x += (targetX + parallaxX - tooth.position.x) * ease;
+    tooth.position.y += (targetY + parallaxY + bob - tooth.position.y) * ease;
     const scale = tooth.scale.x + (targetScale * grow - tooth.scale.x) * ease;
     tooth.scale.setScalar(Math.max(scale, 0.0001));
 
-    // --- Вращение: медленно крутится сам и поворачивается за мышкой ---
-    if (!reduceMotion) spin += dt * 0.35;
-    const rotY = spin + mouse.x * 0.6 + (1 - grow) * 4;
-    const rotX = 0.14 + mouse.y * 0.22 + toWhite * 0.4;
+    // --- Вращение: крутится сам, от прокрутки и поворачивается за мышкой ---
+    if (!reduceMotion) spin += dt * 0.4;
+    const rotY = spin + scrollSpin + mouse.x * 0.8 + (1 - grow) * 4;
+    const rotX = 0.14 + mouse.y * 0.3 + toWhite * 0.4;
     tooth.rotation.y += (rotY - tooth.rotation.y) * 0.08;
     tooth.rotation.x += (rotX - tooth.rotation.x) * 0.08;
-    tooth.rotation.z = -0.12 * (1 - exploded) * (1 - toWhite);
+    // Собранный зуб стоит под наклоном и покачивается, разобранный выпрямляется
+    tooth.rotation.z = (-0.12 + Math.sin(t * 0.7) * 0.04) * (1 - exploded) * (1 - toWhite);
 
     // --- Тень: под собранным зубом, пропадает при разборке ---
     shadow.position.set(tooth.position.x, tooth.position.y - bob - 2.75 * tooth.scale.x, -1);

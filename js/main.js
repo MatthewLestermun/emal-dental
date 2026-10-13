@@ -53,20 +53,61 @@ partCards.forEach(function (card, index) {
   });
 });
 
+// ---------- Плавная смена фона: светлый → тёмный → светлый ----------
+// Вместо резкой границы между светлым экраном и тёмным блоком про имплант
+// перекрашиваем фон всей страницы постепенно, пока блок подъезжает и уезжает.
+const LIGHT = [242, 239, 233]; // тот же цвет, что --bg в CSS
+const DARK = [19, 21, 23];     // тот же цвет, что --dark в CSS
+const lightBlocks = document.querySelectorAll('.hero .container, .blueprint, .hint, .white .pin-grid');
+const darkBlock = document.querySelector('.story .pin-grid');
+
+document.documentElement.classList.add('blend'); // делает блоки прозрачными (см. style.css)
+
+function smoothstep(a, b, v) {
+  const t = clamp((v - a) / (b - a), 0, 1);
+  return t * t * (3 - 2 * t);
+}
+
+function updateBlend() {
+  const vh = window.innerHeight;
+  const rect = storyEl.getBoundingClientRect();
+
+  // enter: блок въезжает снизу (0 → 1). exit: блок уезжает вверх (1 → 0)
+  const enter = clamp((vh - rect.top) / (vh * 0.85), 0, 1);
+  const exit = clamp(rect.bottom / (vh * 0.85), 0, 1);
+  const dark = smoothstep(0, 1, enter) * smoothstep(0, 1, exit); // 0 — светло, 1 — темно
+
+  const mix = LIGHT.map(function (value, i) {
+    return Math.round(value + (DARK[i] - value) * dark);
+  });
+  document.body.style.backgroundColor = 'rgb(' + mix.join(',') + ')';
+  document.body.classList.toggle('on-dark', dark > 0.55);
+
+  // Тексты на светлом гаснут, пока фон темнеет, а светлый текст тёмного блока проявляется
+  const lightOpacity = String(1 - smoothstep(0.12, 0.6, dark));
+  lightBlocks.forEach(function (el) { el.style.opacity = lightOpacity; });
+  darkBlock.style.opacity = String(smoothstep(0.45, 0.92, dark));
+}
+
 // Чтобы не считать на каждое событие прокрутки, обновляем раз в кадр
 let ticking = false;
 
-window.addEventListener('scroll', function () {
+function onScroll() {
   if (ticking) return;
   ticking = true;
   requestAnimationFrame(function () {
     header.classList.toggle('scrolled', window.scrollY > 10);
     updateStory();
+    updateBlend();
     ticking = false;
   });
-}, { passive: true });
+}
+
+window.addEventListener('scroll', onScroll, { passive: true });
+window.addEventListener('resize', onScroll);
 
 updateStory();
+updateBlend();
 
 // ---------- Ползунок отбеливания: название оттенка ----------
 // Шкала оттенков, которой пользуются стоматологи: от тёмного A4 до самого белого BL1
