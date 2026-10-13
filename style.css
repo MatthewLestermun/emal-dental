@@ -269,14 +269,23 @@ em {
 
 .hero-text {
   position: relative;
-  width: 52%;
-  max-width: 640px;
+  width: 54%;
+  max-width: 700px;
+}
+
+/* Невысокие экраны ноутбуков: поджимаем отступы на первом экране */
+@media (max-height: 800px) and (min-width: 761px) {
+  .hero { padding-top: calc(var(--header) + 24px); padding-bottom: 56px; }
+  .hero-sub { margin-bottom: 28px; }
+  .facts { margin-top: 32px; padding-top: 18px; }
+  .facts dt { font-size: 36px; }
 }
 
 .hero-title {
   font-family: var(--serif);
   font-weight: 500;
-  font-size: clamp(44px, 5.3vw, 82px);
+  /* Размер зависит и от ширины, и от высоты экрана — чтобы на невысоких ноутбуках всё помещалось */
+  font-size: clamp(44px, min(5.3vw, 8.6vh), 82px);
   line-height: 0.96;
   letter-spacing: -0.02em;
   margin-bottom: 24px;
