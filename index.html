@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#F2EFE9">
+
+  <!-- Защита: скрипты и картинки только с этого сайта, шрифты только с Google Fonts -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+
+  <title>Эмаль — стоматология</title>
+  <meta name="description" content="Стоматология «Эмаль»: имплантация, отбеливание, лечение под микроскопом. Первая консультация бесплатно.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Golos+Text:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- 3D-сцена: один холст на весь экран, зуб «путешествует» по первым трём блокам -->
+  <canvas id="scene" aria-hidden="true"></canvas>
+
+  <!-- ===================== Шапка ===================== -->
+  <header class="header">
+    <div class="container header-inner">
+      <a href="#top" class="logo">Эмаль<span>стоматология</span></a>
+
+      <nav class="nav" id="nav">
+        <a href="#implant">Имплантация</a>
+        <a href="#whitening">Отбеливание</a>
+        <a href="#clinic">Клиника</a>
+        <a href="#prices">Цены</a>
+        <a href="#doctors">Врачи</a>
+      </nav>
+
+      <div class="header-actions">
+        <a href="tel:+70000000000" class="header-phone">+7 (000) 000-00-00</a>
+        <button class="btn btn-solid btn-sm" type="button" data-book>Записаться</button>
+        <button class="burger" id="burger" type="button" aria-label="Меню"><span></span><span></span></button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ===================== Первый экран ===================== -->
+    <section class="hero" id="top">
+
+      <!-- «Чертёж» за зубом: окружность и размеры импланта -->
+      <svg class="blueprint" viewBox="0 0 520 520" aria-hidden="true">
+        <circle cx="260" cy="260" r="230"/>
+        <circle cx="260" cy="260" r="150" class="dash"/>
+        <line x1="260" y1="10" x2="260" y2="510" class="dash"/>
+        <line x1="10" y1="260" x2="510" y2="260" class="dash"/>
+        <line x1="452" y1="120" x2="452" y2="400"/>
+        <line x1="444" y1="120" x2="460" y2="120"/>
+        <line x1="444" y1="400" x2="460" y2="400"/>
+        <text x="468" y="264">11,5 мм</text>
+        <text x="286" y="478">Ø 4,3 мм</text>
+        <text x="62" y="92">ZrO₂ · Ti Grade 5</text>
+      </svg>
+
+      <div class="container">
+        <div class="hero-text">
+          <p class="kicker reveal">Стоматология на Примерной, 24 · с 2012 года</p>
+          <h1 class="hero-title reveal">Новый зуб, который <em>не отличить</em> от своего</h1>
+          <p class="hero-sub reveal">Ставим импланты, которые служат десятилетиями. Цену и сроки называем до начала лечения и фиксируем в договоре.</p>
+          <div class="actions reveal">
+            <button class="btn btn-solid" type="button" data-book="Консультация">Записаться на консультацию</button>
+            <a href="#prices" class="text-link">Смотреть цены</a>
+          </div>
+          <dl class="facts reveal">
+            <div><dt data-count="14">0</dt><dd>лет практики</dd></div>
+            <div><dt data-count="12000" data-suffix="+">0</dt><dd>пациентов</dd></div>
+            <div><dt data-count="98.4" data-decimals="1" data-suffix="%">0</dt><dd>имплантов прижились</dd></div>
+          </dl>
+        </div>
+      </div>
+
+      <p class="hint">подвигайте мышкой · листайте вниз</p>
+    </section>
+
+    <!-- ===================== Имплантация: зуб разбирается ===================== -->
+    <!-- Блок высокий, а его содержимое «прилипает» к экрану, пока идёт анимация -->
+    <section class="story" id="implant">
+      <div class="pin">
+        <div class="container pin-grid">
+          <div class="story-text">
+            <p class="kicker">Имплантация</p>
+            <h2 class="title">Три детали <em>одного зуба</em></h2>
+
+            <ol class="parts" id="parts">
+              <li class="part active" data-part="0">
+                <span class="part-num">I</span>
+                <div>
+                  <h3>Коронка</h3>
+                  <p class="spec">Диоксид циркония · цвет по шкале VITA</p>
+                  <p>Видимая часть зуба. Оттенок и форму подбираем под соседние зубы, поэтому её не отличить от родных.</p>
+                </div>
+              </li>
+              <li class="part" data-part="1">
+                <span class="part-num">II</span>
+                <div>
+                  <h3>Абатмент</h3>
+                  <p class="spec">Титан с золотистым покрытием</p>
+                  <p>Переходник между имплантом и коронкой. Снаружи его не видно, но он держит всю конструкцию.</p>
+                </div>
+              </li>
+              <li class="part" data-part="2">
+                <span class="part-num">III</span>
+                <div>
+                  <h3>Имплант</h3>
+                  <p class="spec">Титан Grade 5 · Ø 4,3 × 11,5 мм</p>
+                  <p>Искусственный корень. Срастается с костью за 3–4 месяца и служит десятилетиями.</p>
+                </div>
+              </li>
+            </ol>
+
+            <div class="foot">
+              <p><b>от 45 000 ₽</b> под ключ · рассрочка без процентов</p>
+              <button class="btn btn-light" type="button" data-book="Имплантация">Записаться на имплантацию</button>
+            </div>
+          </div>
+          <div class="pin-space"></div>
+        </div>
+        <div class="story-progress"><i id="story-bar"></i></div>
+      </div>
+    </section>
+
+    <!-- ===================== Отбеливание: ползунок ===================== -->
+    <section class="white" id="whitening">
+      <div class="pin">
+        <div class="container pin-grid">
+          <div class="pin-space"></div>
+          <div class="white-text">
+            <p class="kicker">Отбеливание</p>
+            <h2 class="title">Оттенок можно выбрать <em>заранее</em></h2>
+            <p class="lead">Подвигайте ползунок: так меняется цвет эмали за один визит. Осветляем до восьми тонов и не повреждаем зуб.</p>
+
+            <div class="shade">
+              <div class="shade-top">
+                <span>Оттенок по шкале VITA</span>
+                <b id="shade-name">A3</b>
+              </div>
+              <input type="range" id="shade" min="0" max="100" value="18" aria-label="Оттенок эмали">
+              <div class="shade-ticks" id="shade-ticks"></div>
+            </div>
+
+            <div class="foot">
+              <p><b>от 12 000 ₽</b> один час · эффект до двух лет</p>
+              <button class="btn btn-solid" type="button" data-book="Отбеливание">Записаться на отбеливание</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== Клиника ===================== -->
+    <section class="section" id="clinic">
+      <div class="container clinic">
+        <figure class="clinic-photos reveal">
+          <img src="img/clinic.jpg" alt="Кабинет клиники" class="clinic-main" loading="lazy">
+          <img src="img/xray.jpg" alt="Врач изучает снимки" class="clinic-inset" loading="lazy">
+        </figure>
+
+        <div class="clinic-text">
+          <p class="kicker reveal">Клиника</p>
+          <h2 class="title reveal">Всё нужное оборудование <em>в одном месте</em></h2>
+          <ul class="rules">
+            <li class="reveal"><span>01</span><div><h3>Компьютерная анестезия</h3><p>Аппарат вводит препарат медленно и ровно, поэтому укол почти не чувствуется.</p></div></li>
+            <li class="reveal"><span>02</span><div><h3>3D-томограф и микроскоп</h3><p>Снимок делаем за минуту прямо в клинике. Каналы лечим под увеличением в 25 раз.</p></div></li>
+            <li class="reveal"><span>03</span><div><h3>Гарантия пять лет</h3><p>На импланты и коронки. Срок записан в договоре.</p></div></li>
+            <li class="reveal"><span>04</span><div><h3>Рассрочка без процентов</h3><p>До двенадцати месяцев, без банка. Оформляем за десять минут.</p></div></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== Цены ===================== -->
+    <section class="section section-paper" id="prices">
+      <div class="container">
+        <div class="head reveal">
+          <p class="kicker">Цены</p>
+          <h2 class="title">Стоимость называем <em>до лечения</em></h2>
+          <p class="lead">После осмотра врач составит план и распишет цену по пунктам. Она не изменится.</p>
+        </div>
+
+        <div class="price-layout">
+          <div class="price-list">
+            <div class="price-group reveal">
+              <h3>Диагностика</h3>
+              <button class="price-row" type="button" data-book="Консультация"><span><b>Консультация и план лечения</b><small>Осмотр, снимок, расчёт стоимости</small></span><i></i><em>бесплатно</em></button>
+              <button class="price-row" type="button" data-book="КТ-снимок"><span><b>КТ-снимок челюсти</b><small>3D-томограф, результат за минуту</small></span><i></i><em>2 500 ₽</em></button>
+            </div>
+
+            <div class="price-group reveal">
+              <h3>Лечение</h3>
+              <button class="price-row" type="button" data-book="Лечение кариеса"><span><b>Лечение кариеса</b><small>Под микроскопом, с анестезией</small></span><i></i><em>от 4 500 ₽</em></button>
+              <button class="price-row" type="button" data-book="Лечение каналов"><span><b>Лечение каналов</b><small>Один канал, пломбирование</small></span><i></i><em>от 9 000 ₽</em></button>
+              <button class="price-row" type="button" data-book="Профессиональная чистка"><span><b>Профессиональная чистка</b><small>Ультразвук, Air Flow, полировка</small></span><i></i><em>от 5 500 ₽</em></button>
+            </div>
+
+            <div class="price-group reveal">
+              <h3>Эстетика</h3>
+              <button class="price-row" type="button" data-book="Отбеливание"><span><b>Отбеливание</b><small>До восьми тонов за один визит</small></span><i></i><em>от 12 000 ₽</em></button>
+              <button class="price-row" type="button" data-book="Виниры"><span><b>Керамический винир</b><small>За один зуб</small></span><i></i><em>от 28 000 ₽</em></button>
+            </div>
+
+            <div class="price-group reveal">
+              <h3>Имплантация</h3>
+              <button class="price-row" type="button" data-book="Имплантация"><span><b>Имплант под ключ</b><small>Имплант, абатмент и коронка</small></span><i></i><em>от 45 000 ₽</em></button>
+            </div>
+          </div>
+
+          <figure class="price-photo reveal">
+            <img src="img/talk.jpg" alt="Врач разговаривает с пациенткой" loading="lazy">
+            <figcaption>Сначала разговор и план. Потом лечение.</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== Врачи ===================== -->
+    <section class="section" id="doctors">
+      <div class="container">
+        <div class="head reveal">
+          <p class="kicker">Врачи</p>
+          <h2 class="title">Лечат те, кто делает это <em>каждый день</em></h2>
+        </div>
+
+        <div class="doctors">
+          <article class="doctor reveal">
+            <div class="doctor-photo"><img src="img/doctor-1.jpg" alt="Анна Белова" loading="lazy"></div>
+            <h3>Анна Белова</h3>
+            <p>Стоматолог-терапевт</p>
+            <small>Стаж 12 лет · лечение под микроскопом</small>
+          </article>
+          <article class="doctor reveal">
+            <div class="doctor-photo"><img src="img/doctor-2.jpg" alt="Михаил Орлов" loading="lazy"></div>
+            <h3>Михаил Орлов</h3>
+            <p>Хирург-имплантолог</p>
+            <small>Стаж 21 год · более 2 400 имплантов</small>
+          </article>
+          <article class="doctor reveal">
+            <div class="doctor-photo"><img src="img/doctor-3.jpg" alt="Елена Крылова" loading="lazy"></div>
+            <h3>Елена Крылова</h3>
+            <p>Ортодонт</p>
+            <small>Стаж 9 лет · брекеты и элайнеры</small>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== Отзывы ===================== -->
+    <section class="section section-tight">
+      <div class="container">
+        <div class="quotes">
+          <figure class="quote reveal"><blockquote>Боялась стоматологов с детства. Здесь впервые не почувствовала укол и вообще ничего.</blockquote><figcaption>Мария<span>лечение кариеса</span></figcaption></figure>
+          <figure class="quote reveal"><blockquote>Имплант поставили за сорок минут. Цена совпала с той, что назвали на консультации, до рубля.</blockquote><figcaption>Андрей<span>имплантация</span></figcaption></figure>
+          <figure class="quote reveal"><blockquote>После отбеливания коллеги спросили, не сделала ли я виниры. Нет, один час в кресле.</blockquote><figcaption>Ольга<span>отбеливание</span></figcaption></figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== Вопросы ===================== -->
+    <section class="section section-tight">
+      <div class="container faq-wrap">
+        <div class="head reveal">
+          <p class="kicker">Вопросы</p>
+          <h2 class="title">Спрашивают <em>чаще всего</em></h2>
+        </div>
+        <div class="faq reveal">
+          <details>
+            <summary>Больно ли ставить имплант?</summary>
+            <p>Нет. Операция проходит под местной анестезией и занимает 30–40 минут. После неё возможен небольшой отёк на два-три дня.</p>
+          </details>
+          <details>
+            <summary>Сколько служит имплант?</summary>
+            <p>При нормальном уходе двадцать лет и дольше. Гарантию пять лет мы прописываем в договоре.</p>
+          </details>
+          <details>
+            <summary>Отбеливание портит эмаль?</summary>
+            <p>Нет. Гель работает только с пигментом и не истончает эмаль. Первые сутки зубы могут быть чувствительнее обычного.</p>
+          </details>
+          <details>
+            <summary>Можно ли лечиться в рассрочку?</summary>
+            <p>Да, до двенадцати месяцев без процентов и без банка. Оформляем в клинике за десять минут.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== Запись и контакты ===================== -->
+    <section class="cta" id="contacts">
+      <div class="container cta-grid">
+        <div class="cta-text reveal">
+          <p class="kicker">Запись</p>
+          <h2 class="cta-title">Первая консультация <em>бесплатно</em></h2>
+          <p class="lead">Осмотр, снимок и план лечения с ценами. Ни к чему не обязывает.</p>
+          <div class="actions">
+            <button class="btn btn-light" type="button" data-book="Консультация">Записаться</button>
+            <a href="tel:+70000000000" class="text-link">+7 (000) 000-00-00</a>
+          </div>
+          <dl class="contacts">
+            <div><dt>Адрес</dt><dd>ул. Примерная, 24, второй этаж</dd></div>
+            <div><dt>Часы работы</dt><dd>ежедневно с 9:00 до 21:00</dd></div>
+          </dl>
+        </div>
+        <figure class="cta-photo reveal"><img src="img/smile.jpg" alt="Улыбающаяся пациентка" loading="lazy"></figure>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <span>© Стоматология «Эмаль», 2026</span>
+      <span>Концепт сайта: Matthew Lestermun · фото: Unsplash</span>
+    </div>
+  </footer>
+
+  <!-- ===================== Окно записи ===================== -->
+  <div class="modal" id="modal" aria-hidden="true">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <button class="modal-close" type="button" data-close aria-label="Закрыть">×</button>
+
+      <form id="book-form">
+        <p class="kicker">Запись на приём</p>
+        <h2 id="modal-title">Оставьте заявку</h2>
+        <label class="field">Имя
+          <input class="input" name="name" placeholder="Как к вам обращаться" required>
+        </label>
+        <label class="field">Телефон
+          <input class="input" name="phone" type="tel" placeholder="+7 900 000-00-00" required>
+        </label>
+        <label class="field">Услуга
+          <select class="input" name="service" id="service-select">
+            <option>Консультация</option>
+            <option>КТ-снимок</option>
+            <option>Лечение кариеса</option>
+            <option>Лечение каналов</option>
+            <option>Профессиональная чистка</option>
+            <option>Отбеливание</option>
+            <option>Виниры</option>
+            <option>Имплантация</option>
+          </select>
+        </label>
+        <div class="field">Удобное время
+          <div class="chips" id="time-chips">
+            <button type="button" class="chip active">Утро</button>
+            <button type="button" class="chip">День</button>
+            <button type="button" class="chip">Вечер</button>
+          </div>
+        </div>
+        <button class="btn btn-solid btn-block" type="submit">Отправить заявку</button>
+        <p class="note">Демо-версия сайта: заявка никуда не отправляется</p>
+      </form>
+
+      <div class="done">
+        <h2>Заявка принята</h2>
+        <p id="done-text">Администратор перезвонит в течение 15 минут и подберёт время.</p>
+        <button class="btn btn-solid btn-block" type="button" data-close>Хорошо</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/vendor/three.min.js"></script>
+  <script src="js/scene.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
