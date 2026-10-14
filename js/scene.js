@@ -392,6 +392,8 @@
   let spin = 0;
   let scrollSpin = 0;                 // сколько зуб «накрутила» прокрутка
   let lastScroll = window.scrollY;
+  let baseY = 0;                      // высота зуба без сдвига прокруткой
+  let lastMode = 'hero';              // в каком блоке зуб сейчас (для телефона)
 
   // Вкладка не видна — не тратим ресурсы
   document.addEventListener('visibilitychange', function () {
@@ -416,12 +418,36 @@
 
     // p — прогресс прокрутки блока про имплант: 0 в начале, 1 в конце
     const p = clamp(-story.top / (story.height - vh), 0, 1);
-    // toWhite — подъезжаем к блоку отбеливания
-    const toWhite = smoothstep(0, 1, (vh * 0.9 - white.top) / (vh * 0.9));
     // out — блок отбеливания закончился, зуб исчезает
     const out = smoothstep(0, 1, (vh - white.bottom) / (vh * 0.35));
 
-    canvas.style.opacity = String(1 - out);
+    // --- Телефон: зуб «приклеен» к своему блоку и уезжает вместе с текстом ---
+    // На узком экране зуб стоит над текстом, а не сбоку. Если оставить его на месте,
+    // текст при прокрутке проезжает прямо под ним. Поэтому сдвигаем зуб вместе с блоком,
+    // а между блоками он гаснет и появляется уже в следующем.
+    let mode = 'hero';
+    let offsetPx = 0; // на сколько пикселей блок уехал от своего места: минус — вверх
+    let fade = 1;
+    if (mobile) {
+      if (story.top > vh * 0.55) {
+        offsetPx = -window.scrollY;
+      } else if (white.top > vh * 0.5) {
+        mode = 'story';
+        offsetPx = Math.max(0, story.top) + Math.min(0, story.bottom - vh);
+        fade = (1 - smoothstep(0.25, 0.55, story.top / vh)) * smoothstep(0.5, 0.85, white.top / vh);
+      } else {
+        mode = 'white';
+        offsetPx = Math.max(0, white.top) + Math.min(0, white.bottom - vh);
+        fade = 1 - smoothstep(0.2, 0.5, white.top / vh);
+      }
+    }
+
+    // toWhite — подъезжаем к блоку отбеливания (на телефоне переключаемся сразу, пока зуб невидим)
+    const toWhite = mobile
+      ? (mode === 'white' ? 1 : 0)
+      : smoothstep(0, 1, (vh * 0.9 - white.top) / (vh * 0.9));
+
+    canvas.style.opacity = String((1 - out) * fade);
     if (out >= 1) return; // зуба не видно — ничего не рисуем
 
     // --- Прокрутка раскручивает зуб: чем быстрее листаешь, тем быстрее он вращается ---
@@ -487,8 +513,17 @@
     // Зуб слегка смещается за мышкой — появляется ощущение глубины
     const parallaxX = mobile ? 0 : mouse.x * 0.3;
     const parallaxY = mobile ? 0 : -mouse.y * 0.18;
+    // Сменился блок (зуб в этот момент невидим) — ставим сразу на место, без перелёта
+    if (mode !== lastMode) {
+      baseY = targetY + bob;
+      tooth.scale.setScalar(Math.max(targetScale * grow, 0.0001));
+      lastMode = mode;
+    }
+
     tooth.position.x += (targetX + parallaxX - tooth.position.x) * ease;
-    tooth.position.y += (targetY + parallaxY + bob - tooth.position.y) * ease;
+    baseY += (targetY + parallaxY + bob - baseY) * ease;
+    // Сдвиг вместе с блоком — без сглаживания, иначе зуб отстаёт от текста
+    tooth.position.y = baseY - offsetPx * (2 * halfH / vh);
     const scale = tooth.scale.x + (targetScale * grow - tooth.scale.x) * ease;
     tooth.scale.setScalar(Math.max(scale, 0.0001));
 
