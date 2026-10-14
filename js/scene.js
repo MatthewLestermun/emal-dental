@@ -14,6 +14,10 @@
   const storyEl = document.getElementById('implant');
   const whiteEl = document.getElementById('whitening');
   const shadeInput = document.getElementById('shade');
+  const whiteText = document.querySelector('.white-text');
+  const whitePin = document.querySelector('.white .pin');
+  const storyText = document.querySelector('.story-text');
+  const storyPin = document.querySelector('.story .pin');
 
   // Если 3D не поддерживается — сайт просто остаётся без зуба (класс no-3d прячет холст)
   function fallback() {
@@ -288,7 +292,7 @@
 
   // ---------- Материалы ----------
   const WHITE = new THREE.Color(1, 1, 1);
-  const STAINED = color(0xD9B45A); // во сколько раз «желтеет» эмаль до отбеливания
+  const STAINED = color(0xE2C590); // во сколько раз «желтеет» эмаль до отбеливания
 
   const ceramic = new THREE.MeshPhysicalMaterial({
     color: 0xFFFFFF,
@@ -356,6 +360,61 @@
 
   const shadow = makeShadow();
   scene.add(shadow);
+
+  // ---------- Свечение за разобранным зубом ----------
+  // На тёмном фоне детали без подсветки «висят в пустоте». Мягкое тёплое сияние сзади
+  // отделяет их от фона, как свет в витрине.
+  function makeGlow() {
+    const size = 256;
+    const c = document.createElement('canvas');
+    c.width = c.height = size;
+    const ctx = c.getContext('2d');
+    const g = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+    g.addColorStop(0, 'rgba(255,236,205,0.55)');
+    g.addColorStop(0.3, 'rgba(214,170,110,0.28)');
+    g.addColorStop(0.65, 'rgba(150,119,74,0.08)');
+    g.addColorStop(1, 'rgba(150,119,74,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, size, size);
+
+    const material = new THREE.MeshBasicMaterial({
+      map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false,
+      blending: THREE.AdditiveBlending, toneMapped: false, opacity: 0
+    });
+    return new THREE.Mesh(new THREE.PlaneGeometry(7, 9), material);
+  }
+
+  const glow = makeGlow();
+  glow.renderOrder = -1;
+  scene.add(glow);
+
+  // Светлый ореол за коронкой в блоке отбеливания: на светлом фоне она как под софтбоксом
+  function makeHalo() {
+    const size = 256;
+    const c = document.createElement('canvas');
+    c.width = c.height = size;
+    const ctx = c.getContext('2d');
+    const g = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+    g.addColorStop(0, 'rgba(255,255,255,0.95)');
+    g.addColorStop(0.45, 'rgba(255,255,255,0.55)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, size, size);
+
+    const material = new THREE.MeshBasicMaterial({
+      map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false, toneMapped: false, opacity: 0
+    });
+    return new THREE.Mesh(new THREE.PlaneGeometry(5.2, 5.2), material);
+  }
+
+  const halo = makeHalo();
+  halo.renderOrder = -2;
+  scene.add(halo);
+
+  // Контровой свет сзади: тонкая светлая кайма по краям деталей
+  const rim = new THREE.DirectionalLight(0xFFE2B8, 0);
+  rim.position.set(-3, 2, -8);
+  scene.add(rim);
 
   // ---------- Состояние ----------
   const mouse = { x: 0, y: 0 };
@@ -491,15 +550,41 @@
     // Телефон: всегда по центру в верхней части экрана.
     const fit = clamp(halfW / 6.4, 0.55, 1); // на узких экранах зуб меньше
     const side = mobile ? 0 : halfW * 0.46;
-    const targetX = side * (1 - 2 * toWhite);
+    // Сначала коронка уезжает от текста влево и только потом вырастает — так она не проходит по заголовку
+    const targetX = side * (1 - 2 * smoothstep(0, 0.55, toWhite));
+    const grownWhite = smoothstep(0.45, 1, toWhite);
 
     let targetScale;
     let targetY;
-    if (mobile) {
-      targetScale = lerp(lerp(0.74, 0.47, exploded), 0.9, toWhite);
-      targetY = halfH * lerp(lerp(0.48, 0.42, exploded), 0.5, toWhite);
+    if (mobile && mode === 'white') {
+      // Коронку ставим ровно в свободное место между шапкой и текстом и подгоняем по размеру,
+      // чтобы она не наезжала на заголовок ни на каком телефоне
+      const pxPerUnit = vh / (2 * halfH);
+      const textTop = whiteText && whitePin
+        ? whiteText.getBoundingClientRect().top - whitePin.getBoundingClientRect().top
+        : vh * 0.45;
+      const gapTop = 72;                       // низ шапки
+      const gap = Math.max(100, textTop - gapTop);
+      targetScale = Math.min(0.8, (gap * 0.72) / (1.9 * pxPerUnit), (window.innerWidth * 0.62) / (2.3 * pxPerUnit));
+      targetY = halfH - ((gapTop + textTop) / 2) / pxPerUnit;
+    } else if (mobile && mode === 'story') {
+      // Разобранный зуб тоже вписываем в место над текстом: на коротких экранах меньше, на длинных крупнее
+      const pxPerUnit = vh / (2 * halfH);
+      const textTop = storyText && storyPin
+        ? storyText.getBoundingClientRect().top - storyPin.getBoundingClientRect().top
+        : vh * 0.45;
+      const gapTop = 64;
+      const gap = Math.max(120, textTop - gapTop);
+      const fitScale = Math.min(0.62, (gap * 0.92) / (6.8 * pxPerUnit));
+      const fitY = halfH - ((gapTop + textTop) / 2) / pxPerUnit - 0.1 * fitScale;
+      targetScale = lerp(0.74, fitScale, exploded);
+      targetY = lerp(halfH * 0.48, fitY, exploded);
+    } else if (mobile) {
+      targetScale = lerp(0.74, 0.47, exploded);
+      targetY = halfH * lerp(0.48, 0.42, exploded);
     } else {
-      targetScale = lerp(lerp(1.15, 0.86, exploded), 1.5, toWhite) * fit;
+      // пока коронка перелетает, держим её маленькой (как в разобранном виде)
+      targetScale = lerp(lerp(1.15, 0.86, Math.max(exploded, smoothstep(0, 0.15, toWhite))), 1.3, grownWhite) * fit;
       targetY = lerp(0.15, -0.3, exploded); // в разобранном виде чуть ниже, чтобы коронка не ушла под шапку
     }
     // Когда осталась одна коронка — ставим её по центру, а не выше
@@ -530,16 +615,29 @@
     // --- Вращение: крутится сам, от прокрутки и поворачивается за мышкой ---
     if (!reduceMotion) spin += dt * 0.4;
     const rotY = spin + scrollSpin + mouse.x * 0.8 + (1 - grow) * 4;
-    const rotX = 0.14 + mouse.y * 0.3 + toWhite * 0.4;
+    const rotX = 0.14 + mouse.y * 0.3 + toWhite * 0.6; // коронку наклоняем к зрителю — видно бугорки
     tooth.rotation.y += (rotY - tooth.rotation.y) * 0.08;
     tooth.rotation.x += (rotX - tooth.rotation.x) * 0.08;
     // Собранный зуб стоит под наклоном и покачивается, разобранный выпрямляется
     tooth.rotation.z = (-0.12 + Math.sin(t * 0.7) * 0.04) * (1 - exploded) * (1 - toWhite);
 
     // --- Тень: под собранным зубом, пропадает при разборке ---
-    shadow.position.set(tooth.position.x, tooth.position.y - bob - 2.75 * tooth.scale.x, -1);
-    shadow.scale.setScalar(tooth.scale.x);
-    shadow.material.opacity = 0.55 * grow * (1 - exploded) * (1 - toWhite);
+    // В блоке отбеливания тень снова появляется — под одной коронкой, поэтому ближе
+    shadow.position.set(tooth.position.x, tooth.position.y - bob - lerp(2.75, -0.15, toWhite) * tooth.scale.x, -1);
+    shadow.scale.setScalar(tooth.scale.x * lerp(1, 0.8, toWhite));
+    shadow.material.opacity = 0.55 * grow * (1 - exploded) * lerp(1, 0.8, toWhite);
+
+    // --- Свечение и контровой свет: только пока зуб разобран на тёмном фоне ---
+    const lit = exploded * (1 - toWhite);
+    glow.position.set(tooth.position.x, tooth.position.y + 0.3 * tooth.scale.x, -2.5);
+    glow.scale.setScalar(tooth.scale.x * (1 + 0.04 * Math.sin(t * 1.3)));
+    glow.material.opacity = lit * (0.85 + 0.15 * Math.sin(t * 1.3)); // медленно «дышит»
+    rim.intensity = 1.8 * lit;
+
+    // Ореол за одной коронкой (её центр выше начала координат зуба)
+    halo.position.set(tooth.position.x, tooth.position.y - bob + (CROWN_Y + 0.3) * tooth.scale.x, -2);
+    halo.scale.setScalar(tooth.scale.x);
+    halo.material.opacity = toWhite;
 
     // --- Цвет эмали: в блоке отбеливания им управляет ползунок ---
     const shade = shadeInput ? Number(shadeInput.value) / 100 : 1;
